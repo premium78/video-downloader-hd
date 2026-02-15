@@ -1,12 +1,10 @@
 import telebot
-import requests
-import os
 from yt_dlp import YoutubeDL
 from telebot import types
 from flask import Flask
 from threading import Thread
 
-# --- Render-কে সচল রাখার জন্য Flask সার্ভার (যাতে Port Error না আসে) ---
+# --- Render-কে সচল রাখার জন্য Flask সার্ভার (এটি আপনার দেওয়া কোডের সাথে যুক্ত করা হলো) ---
 app = Flask('')
 
 @app.route('/')
@@ -22,87 +20,107 @@ def keep_alive():
     t.start()
 
 # --- ⚙️ CONFIGURATION ---
-# আপনার দেওয়া নতুন এপিআই টোকেন এখানে বসানো হয়েছে
+# আপনার দেওয়া নতুন এপিআই টোকেন নিচে বসানো হয়েছে
 API_TOKEN = '8351525966:AAGd_LMfjJVtzCSYjqZZ3WIi0dq82tAmm5E'
 ADMIN_ID = 7854988070 
 bot = telebot.TeleBot(API_TOKEN)
+
+
+# ডাটা সেভ রাখার জন্য
+video_cache = {}
+
 
 def main_keyboard():
     markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     markup.add("📥 Download Video", "☎️ Support")
     return markup
 
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.send_message(message.chat.id, "🚀 **Smart Downloader v5.0**\nYouTube & TikTok Fixed with Flask! ✅", reply_markup=main_keyboard())
+    bot.send_message(message.chat.id, "🚀 **Smart Downloader v4.6**\nAll Social Media Supported! ✅", reply_markup=main_keyboard())
+
 
 @bot.message_handler(func=lambda m: m.text == "📥 Download Video")
 def ask_for_link(message):
     msg = bot.send_message(message.chat.id, "🔗 **Please send the video link:**")
     bot.register_next_step_handler(msg, process_video)
 
+
 def process_video(message):
     url = message.text
     chat_id = message.chat.id
     status = bot.send_message(chat_id, "⚡ **Generating Best Link...**")
 
-    # --- স্পেশাল টিকটক হ্যান্ডলার ---
-    if "tiktok.com" in url or "vt.tiktok" in url:
-        try:
-            api_url = f"https://tikwm.com/api/?url={url}"
-            response = requests.get(api_url).json()
-            if response.get('code') == 0:
-                video_url = response['data']['play']
-                file_name = f"tiktok_{chat_id}.mp4"
-                r = requests.get(video_url, stream=True)
-                with open(file_name, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1024*1024):
-                        if chunk: f.write(chunk)
-                bot.delete_message(chat_id, status.message_id)
-                with open(file_name, 'rb') as video:
-                    bot.send_video(chat_id, video, caption="🎬 **Video Ready Boss 😎**")
-                os.remove(file_name)
-                return
-        except Exception as e:
-            print(f"TikTok Error: {e}")
 
-    # --- সাধারণ মেথড (YT/FB/Insta - কুকিজ সহ) ---
+    # সব সোশ্যাল মিডিয়া (Insta, FB, YT) সাপোর্ট করার জন্য উন্নত সেটিংস
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'format': 'best[ext=mp4]/best',
-        'cookiefile': 'cookies.txt',  # আপনার আপলোড করা ফাইলটি ব্যবহার করবে
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'nocheckcertificate': True
+        'referer': 'https://www.instagram.com/', # ইনস্টাগ্রাম সাপোর্টের জন্য
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
+
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             title = info.get('title', 'Video')
+            duration = info.get('duration_string', 'Unknown')
+            thumbnail = info.get('thumbnail')
             download_url = info.get('url')
+
 
             if download_url:
                 markup = types.InlineKeyboardMarkup()
                 markup.add(types.InlineKeyboardButton("📥 Download Now", url=download_url))
+
+
+                caption = (
+                    f"🎬 **Video Ready Boss 😎**\n\n"
+                    f"📌 **Title:** {title[:60]}...\n"
+                    f"⏱ **Duration:** {duration}\n"
+                    f"✅ **Quality:** Best (With Sound)\n\n"
+                    f"👇 নিচের বাটন থেকে ডাউনলোড করুন:"
+                )
+
+
                 bot.delete_message(chat_id, status.message_id)
-                bot.send_message(chat_id, f"🎬 **Video Ready Boss 😎**\n\n📌 **Title:** {title[:60]}...\n\n👇 নিচের বাটন থেকে ডাউনলোড করুন:", reply_markup=markup, parse_mode="Markdown")
+                
+                if thumbnail:
+                    bot.send_photo(chat_id, thumbnail, caption=caption, reply_markup=markup, parse_mode="Markdown")
+                else:
+                    bot.send_message(chat_id, caption, reply_markup=markup, parse_mode="Markdown")
             else:
                 bot.edit_message_text("❌ সরাসরি লিঙ্ক পাওয়া যায়নি।", chat_id, status.message_id)
-    except Exception as e:
-        bot.edit_message_text(f"❌ Error: ইউটিউব বা সার্ভার ব্লক করেছে। কুকিজ ফাইলটি চেক করুন।", chat_id, status.message_id)
 
-# --- SUPPORT SYSTEM ---
+
+    except Exception as e:
+        bot.edit_message_text("❌ Error: লিঙ্কটি কাজ করছে না বা এটি প্রাইভেট ভিডিও।", chat_id, status.message_id)
+        print(f"Error: {e}")
+
+
+# --- ☎️ SUPPORT / MESSAGE TO ADMIN ---
 @bot.message_handler(func=lambda m: m.text == "☎️ Support")
 def support(message):
-    msg = bot.send_message(message.chat.id, "✍️ সমস্যাটি লিখে পাঠান:", reply_markup=types.ForceReply())
+    msg = bot.send_message(message.chat.id, "✍️ **আপনার সমস্যাটি লিখে পাঠান (এটি অ্যাডমিনের কাছে যাবে):**", reply_markup=types.ForceReply())
     bot.register_next_step_handler(msg, send_to_admin)
 
+
 def send_to_admin(message):
-    bot.send_message(ADMIN_ID, f"📩 **New Message!**\n\n👤 From: {message.from_user.first_name}\n💬 Message: {message.text}")
-    bot.send_message(message.chat.id, "✅ মেসেজ পাঠানো হয়েছে!", reply_markup=main_keyboard())
+    user_msg = message.text
+    user_name = message.from_user.first_name
+    user_id = message.from_user.id
+    
+    # অ্যাডমিনকে মেসেজ পাঠানো
+    bot.send_message(ADMIN_ID, f"📩 **New Support Message!**\n\n👤 From: {user_name}\n🆔 ID: `{user_id}`\n\n💬 Message: {user_msg}", parse_mode="Markdown")
+    
+    # ইউজারকে কনফার্ম করা
+    bot.send_message(message.chat.id, "✅ **আপনার মেসেজটি অ্যাডমিনের কাছে পাঠানো হয়েছে!** ধন্যবাদ।", reply_markup=main_keyboard())
+
 
 if __name__ == "__main__":
-    keep_alive() # Flask সার্ভার চালু করা
-    print("🚀 Super Fast Bot v5.0 is Online!")
+    keep_alive() # রেন্ডারের জন্য সার্ভার চালু করা
+    print("🚀 Super Fast Bot v4.6 is Online!")
     bot.infinity_polling()
