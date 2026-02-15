@@ -1,25 +1,9 @@
-import telebot
+﻿import telebot
 import requests
 import os
 from yt_dlp import YoutubeDL
 from telebot import types
-from flask import Flask
-from threading import Thread
 
-# --- Render-কে সচল রাখার জন্য Flask সার্ভার (বট অফলাইন হবে না) ---
-app = Flask('')
-
-@app.route('/')
-def home():
-    return "Bot is Online! 🚀"
-
-def run():
-    # Render সাধারণত ১০০০০ পোর্ট ব্যবহার করে
-    app.run(host='0.0.0.0', port=10000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
 
 # --- ⚙️ CONFIGURATION ---
 # আপনার দেওয়া নতুন এপিআই টোকেন নিচে বসানো হয়েছে
@@ -88,6 +72,7 @@ def process_video(message):
 
 
     # --- সাধারণ মেথড (FB, Insta, YT এর জন্য) ---
+    # ইউটিউবের জন্য এখানে কিছু অতিরিক্ত Headers যোগ করা হয়েছে
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
@@ -147,7 +132,5 @@ def send_to_admin(message):
     bot.send_message(message.chat.id, "✅ **আপনার মেসেজটি অ্যাডমিনের কাছে পাঠানো হয়েছে!** ধন্যবাদ।", reply_markup=main_keyboard())
 
 
-if __name__ == "__main__":
-    keep_alive() # রেন্ডারের জন্য সার্ভার চালু করা
-    print("🚀 Super Fast Bot v4.6 (New Token) is Online!")
-    bot.infinity_polling()
+print("🚀 Super Fast Bot v4.6 (New Token) is Online!")
+bot.infinity_polling()
