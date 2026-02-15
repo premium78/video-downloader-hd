@@ -62,13 +62,16 @@ def process_video(message):
             # টিকটকে এরর আসলে সাধারণ মেথডে চেষ্টা করবে
 
     # --- সাধারণ মেথড (FB, Insta, YT এর জন্য আগের মতোই) ---
-    ydl_opts = {
+        ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'format': 'best[ext=mp4]/best',
-        'referer': 'https://www.instagram.com/',
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'cookiefile': 'cookies.txt',  # এই নতুন লাইনটি যোগ করুন
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'referer': 'https://www.google.com/',
+        'nocheckcertificate': True
     }
+
 
     try:
         with YoutubeDL(ydl_opts) as ydl:
