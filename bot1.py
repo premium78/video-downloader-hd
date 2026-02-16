@@ -1,3 +1,18 @@
+from flask import Flask
+from threading import Thread
+
+app = Flask('')
+@app.route('/')
+def home():
+    return "I am Alive! 🚀"
+
+def run():
+    app.run(host='0.0.0.0', port=10000)
+
+def keep_alive():
+    t = Thread(target=run)
+    t.start()
+    
 import telebot
 import requests
 import os
@@ -77,4 +92,6 @@ def process_video(message):
 if __name__ == "__main__":
     keep_alive() # এটি সবার আগে সার্ভার চালু করবে
     print("🚀 Bot is starting...")
+    if __name__ == "__main__":
+    keep_alive()
     bot.infinity_polling()
