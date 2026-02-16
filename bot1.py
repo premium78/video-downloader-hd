@@ -14,7 +14,6 @@ def home():
     return "I am Alive! 🚀"
 
 def run():
-    # Render এর জন্য পোর্ট ১০০০০ ব্যবহার করা ভালো
     app.run(host='0.0.0.0', port=10000)
 
 def keep_alive():
@@ -61,11 +60,7 @@ def process_video(message):
         except: pass
 
     # ইউটিউব ও অন্যান্য
-    ydl_opts = {
-        'quiet': True, 
-        'format': 'best[ext=mp4]/best',
-        'nocheckcertificate': True
-    }
+    ydl_opts = {'quiet': True, 'format': 'best[ext=mp4]/best', 'nocheckcertificate': True}
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -79,6 +74,6 @@ def process_video(message):
 
 # --- বটের মেইন লুপ ---
 if __name__ == "__main__":
-    keep_alive() # Flask সার্ভার চালু করা
+    keep_alive() # সার্ভার এক্টিভ রাখা
     print("🚀 Bot is starting...")
     bot.infinity_polling()
