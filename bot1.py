@@ -1,18 +1,3 @@
-from flask import Flask
-from threading import Thread
-
-app = Flask('')
-@app.route('/')
-def home():
-    return "I am Alive! 🚀"
-
-def run():
-    app.run(host='0.0.0.0', port=10000)
-
-def keep_alive():
-    t = Thread(target=run)
-    t.start()
-    
 import telebot
 import requests
 import os
@@ -26,16 +11,17 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "I am Alive! 🚀" # এই মেসেজটি পেলেই UptimeRobot বুঝবে বট সচল
+    return "I am Alive! 🚀"
 
 def run():
+    # Render এর জন্য পোর্ট ১০০০০ ব্যবহার করা ভালো
     app.run(host='0.0.0.0', port=10000)
 
 def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# --- CONFIGURATION ---
+# --- ⚙️ CONFIGURATION ---
 API_TOKEN = '8351525966:AAGd_LMfjJVtzCSYjqZZ3WIi0dq82tAmm5E'
 ADMIN_ID = 7854988070 
 bot = telebot.TeleBot(API_TOKEN)
@@ -50,7 +36,6 @@ def main_keyboard():
 def send_welcome(message):
     bot.send_message(message.chat.id, "🚀 **Smart Downloader v4.6**\nAlways Active Mode Enabled! ✅", reply_markup=main_keyboard())
 
-# --- ভিডিও প্রসেসিং সেকশন (আগের কোড অনুযায়ী) ---
 @bot.message_handler(func=lambda m: m.text == "📥 Download Video")
 def ask_for_link(message):
     msg = bot.send_message(message.chat.id, "🔗 **Please send the video link:**")
@@ -76,7 +61,11 @@ def process_video(message):
         except: pass
 
     # ইউটিউব ও অন্যান্য
-    ydl_opts = {'quiet': True, 'format': 'best[ext=mp4]/best'}
+    ydl_opts = {
+        'quiet': True, 
+        'format': 'best[ext=mp4]/best',
+        'nocheckcertificate': True
+    }
     try:
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -90,8 +79,6 @@ def process_video(message):
 
 # --- বটের মেইন লুপ ---
 if __name__ == "__main__":
-    keep_alive() # এটি সবার আগে সার্ভার চালু করবে
+    keep_alive() # Flask সার্ভার চালু করা
     print("🚀 Bot is starting...")
-    if __name__ == "__main__":
-    keep_alive()
     bot.infinity_polling()
